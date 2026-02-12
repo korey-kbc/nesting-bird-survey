@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nesting Bird Survey</title>
+<style>
+  :root {
+    --primary: #2e7d32;
+    --primary-light: #4caf50;
+    --primary-dark: #1b5e20;
+    --accent: #ff8f00;
+    --bg: #f5f7f5;
+    --card: #ffffff;
+    --text: #263238;
+    --text-light: #546e7a;
+    --border: #c8e6c9;
+    --danger: #c62828;
+    --danger-light: #ffebee;
+    --success: #2e7d32;
+    --success-light: #e8f5e9;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --radius: 10px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; min-height:100vh; }
+
+  .top-nav { background:var(--primary); color:white; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.15); }
+  .top-nav h1 { font-size:18px; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .nav-tabs { display:flex; gap:4px; }
+  .nav-tab { background:rgba(255,255,255,0.15); border:none; color:white; padding:6px 14px; border-radius:20px; font-size:13px; cursor:pointer; transition:all 0.2s; }
+  .nav-tab.active { background:white; color:var(--primary); font-weight:600; }
+
+  .container { max-width:700px; margin:0 auto; padding:16px; }
+  .section { background:var(--card); border-radius:var(--radius); padding:20px; margin-bottom:16px; box-shadow:var(--shadow); border:1px solid var(--border); }
+  .section-title { font-size:15px; font-weight:700; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid var(--border); display:flex; align-items:center; gap:8px; }
+
+  .field { margin-bottom:14px; }
+  .field:last-child { margin-bottom:0; }
+  label { display:block; font-size:13px; font-weight:600; color:var(--text-light); margin-bottom:4px; }
+  input[type="text"],input[type="number"],input[type="date"],input[type="time"],select,textarea {
+    width:100%; padding:10px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:15px; font-family:inherit; background:#fafafa; transition:border-color 0.2s; -webkit-appearance:none;
+  }
+  input:focus,select:focus,textarea:focus { outline:none; border-color:var(--primary-light); background:white; box-shadow:0 0 0 3px rgba(76,175,80,0.12); }
+  textarea { resize:vertical; min-height:80px; }
+
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+
+  .range-wrap { display:flex; align-items:center; gap:12px; }
+  .range-wrap input[type="range"] { flex:1; -webkit-appearance:none; height:6px; border-radius:3px; background:#ddd; outline:none; border:none; padding:0; }
+  .range-wrap input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; border-radius:50%; background:var(--primary); cursor:pointer; }
+  .range-val { min-width:44px; text-align:center; font-weight:700; font-size:15px; color:var(--primary); }
+
+  .toggle-group { display:flex; gap:8px; flex-wrap:wrap; }
+  .toggle-btn { padding:8px 16px; border:1.5px solid #ddd; border-radius:20px; background:#fafafa; font-size:14px; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+  .toggle-btn.active { background:var(--success-light); border-color:var(--primary); color:var(--primary); font-weight:600; }
+
+  .list-items { margin-bottom:8px; }
+  .list-item { background:#f8faf8; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px; position:relative; }
+  .list-item .remove-btn { position:absolute; top:8px; right:8px; background:var(--danger-light); color:var(--danger); border:none; border-radius:50%; width:26px; height:26px; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .add-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--success-light); color:var(--primary); border:1.5px dashed var(--primary-light); border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; }
+  .add-btn:hover { background:#c8e6c9; }
+
+  /* Autocomplete */
+  .autocomplete-wrap { position:relative; }
+  .autocomplete-list { position:absolute; top:100%; left:0; right:0; background:white; border:1.5px solid var(--primary-light); border-top:none; border-radius:0 0 8px 8px; max-height:200px; overflow-y:auto; z-index:50; box-shadow:0 4px 12px rgba(0,0,0,0.15); display:none; }
+  .autocomplete-list.show { display:block; }
+  .autocomplete-item { padding:8px 12px; cursor:pointer; font-size:14px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; }
+  .autocomplete-item:hover,.autocomplete-item.selected { background:var(--success-light); }
+  .autocomplete-item .code { font-weight:700; color:var(--primary); min-width:50px; }
+  .autocomplete-item .name { color:var(--text); }
+
+  /* GPS */
+  .gps-display { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .gps-btn { padding:8px 14px; background:var(--primary); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:6px; }
+  .gps-btn:disabled { background:#aaa; cursor:not-allowed; }
+  .gps-btn.secondary { background:white; color:var(--primary); border:1.5px solid var(--primary); }
+  .gps-coords { font-size:14px; color:var(--text); font-family:monospace; background:#f0f4f0; padding:6px 10px; border-radius:6px; }
+  .gps-accuracy { font-size:12px; color:var(--text-light); }
+
+  /* Photo Section */
+  .photo-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; margin-bottom:8px; }
+  .photo-thumb { width:100%; aspect-ratio:1; object-fit:cover; border-radius:8px; border:2px solid var(--border); cursor:pointer; }
+  .photo-thumb-wrap { position:relative; }
+  .photo-thumb-wrap .remove-btn { position:absolute; top:-6px; right:-6px; background:var(--danger); color:white; border:none; border-radius:50%; width:22px; height:22px; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,0.3); }
+  .capture-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:16px; background:#f0f4f0; border:2px dashed var(--border); border-radius:8px; cursor:pointer; font-family:inherit; font-size:13px; color:var(--text-light); transition:all 0.2s; aspect-ratio:1; min-height:100px; }
+  .capture-btn:hover { border-color:var(--primary); color:var(--primary); }
+  .capture-btn .icon { font-size:28px; }
+
+  .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .btn { flex:1; min-width:140px; padding:14px 20px; border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
+  .btn-primary { background:var(--primary); color:white; }
+  .btn-primary:hover { background:var(--primary-dark); }
+  .btn-secondary { background:white; color:var(--primary); border:2px solid var(--primary); }
+  .btn-accent { background:var(--accent); color:white; }
+  .btn-danger { background:var(--danger); color:white; }
+  .btn-sm { padding:8px 14px; font-size:13px; min-width:auto; flex:none; }
+
+  .survey-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; cursor:pointer; transition:all 0.2s; display:flex; justify-content:space-between; align-items:center; }
+  .survey-card:hover { border-color:var(--primary); box-shadow:var(--shadow); }
+  .survey-card-info h3 { font-size:15px; margin-bottom:2px; }
+  .survey-card-info p { font-size:13px; color:var(--text-light); }
+  .survey-card-actions { display:flex; gap:6px; }
+  .icon-btn { width:36px; height:36px; border:1px solid #ddd; border-radius:8px; background:white; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s; }
+  .icon-btn:hover { background:#f5f5f5; }
+  .icon-btn.danger:hover { background:var(--danger-light); color:var(--danger); }
+
+  .report-header { text-align:center; padding:20px 0; border-bottom:2px solid var(--border); margin-bottom:20px; }
+  .report-header h2 { font-size:20px; color:var(--primary); }
+  .report-header p { font-size:13px; color:var(--text-light); margin-top:4px; }
+  .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
+  .stat-card { background:var(--success-light); border-radius:10px; padding:16px; text-align:center; }
+  .stat-card .stat-num { font-size:28px; font-weight:800; color:var(--primary); }
+  .stat-card .stat-label { font-size:12px; color:var(--text-light); text-transform:uppercase; letter-spacing:0.5px; }
+  .report-table { width:100%; border-collapse:collapse; font-size:14px; margin-bottom:16px; }
+  .report-table th { background:var(--primary); color:white; padding:10px 12px; text-align:left; font-weight:600; font-size:12px; text-transform:uppercase; }
+  .report-table td { padding:8px 12px; border-bottom:1px solid #eee; }
+  .report-table tr:nth-child(even) { background:#f8faf8; }
+
+  .toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(100px); background:#333; color:white; padding:12px 24px; border-radius:10px; font-size:14px; z-index:1000; transition:transform 0.3s; white-space:nowrap; }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:200; display:none; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay.show { display:flex; }
+  .modal { background:white; border-radius:16px; max-width:400px; width:100%; padding:24px; text-align:center; }
+  .modal h3 { margin-bottom:8px; }
+  .modal p { font-size:14px; color:var(--text-light); margin-bottom:20px; }
+
+  .empty-state { text-align:center; padding:40px 20px; color:var(--text-light); }
+  .empty-state .icon { font-size:48px; margin-bottom:12px; }
+  .empty-state h3 { margin-bottom:4px; color:var(--text); }
+
+  .view { display:none; }
+  .view.active { display:block; }
+
+  .photo-modal { position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:300; display:none; align-items:center; justify-content:center; }
+  .photo-modal.show { display:flex; }
+  .photo-modal img { max-width:95%; max-height:90vh; border-radius:8px; }
+  .photo-modal .close-btn { position:absolute; top:16px; right:16px; color:white; background:rgba(255,255,255,0.2); border:none; border-radius:50%; width:40px; height:40px; font-size:20px; cursor:pointer; }
+
+  .pdf-status { text-align:center; padding:20px; color:var(--text-light); font-size:14px; }
+  .pdf-status .spinner { display:inline-block; width:20px; height:20px; border:3px solid #ddd; border-top:3px solid var(--primary); border-radius:50%; animation:spin 1s linear infinite; margin-right:8px; vertical-align:middle; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  @media (max-width:500px) {
+    .row { grid-template-columns:1fr; }
+    .row-3 { grid-template-columns:1fr 1fr; }
+    .nav-tabs { gap:2px; }
+    .nav-tab { padding:6px 10px; font-size:12px; }
+    .container { padding:10px; }
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+<div class="top-nav">
+  <h1>&#x1F426; Bird Survey</h1>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('form')">New</button>
+    <button class="nav-tab" onclick="showView('saved')">Saved</button>
+    <button class="nav-tab" onclick="showView('report')">Report</button>
+  </div>
+</div>
+
+<!-- FORM VIEW -->
+<div id="view-form" class="view active">
+<div class="container">
+
+  <!-- Project Info -->
+  <div class="section">
+    <div class="section-title">&#x1F4CB; Project Info</div>
+    <div class="field">
+      <label>Project Name</label>
+      <input type="text" id="projectName" placeholder="e.g., Riverside Nesting Survey 2026">
+    </div>
+    <div class="field">
+      <label>Observer(s)</label>
+      <input type="text" id="observers" placeholder="Names of field observers">
+    </div>
+    <div class="field">
+      <label>Survey Date</label>
+      <input type="date" id="surveyDate">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Start Time</label>
+        <input type="time" id="startTime">
+      </div>
+      <div class="field">
+        <label>End Time</label>
+        <input type="time" id="endTime">
+      </div>
+    </div>
+  </div>
+
+  <!-- GPS Location -->
+  <div class="section">
+    <div class="section-title">&#x1F4CD; Survey Location</div>
+    <div class="field">
+      <label>Site Name / Description</label>
+      <input type="text" id="siteName" placeholder="e.g., Oak Creek riparian corridor">
+    </div>
+    <div class="field">
+      <label>GPS Coordinates</label>
+      <div class="gps-display">
+        <button class="gps-btn" id="gpsBtn" onclick="getGPS()">&#x1F4F1; Get GPS</button>
+        <button class="gps-btn secondary" onclick="toggleManualGPS()">&#x270F; Manual</button>
+        <span class="gps-coords" id="gpsDisplay" style="display:none"></span>
+        <span class="gps-accuracy" id="gpsAccuracy"></span>
+      </div>
+      <div id="manualGPS" style="display:none; margin-top:10px">
+        <div class="row">
+          <div class="field">
+            <label>Latitude</label>
+            <input type="number" id="manualLat" step="any" placeholder="e.g., 34.0522">
+          </div>
+          <div class="field">
+            <label>Longitude</label>
+            <input type="number" id="manualLon" step="any" placeholder="e.g., -118.2437">
+          </div>
+        </div>
+        <button class="gps-btn secondary btn-sm" style="margin-top:6px" onclick="setManualGPS()">Set Coordinates</button>
+      </div>
+      <input type="hidden" id="latitude" value="">
+      <input type="hidden" id="longitude" value="">
+    </div>
+  </div>
+
+  <!-- Weather -->
+  <div class="section">
+    <div class="section-title">&#x26C5; Weather Conditions</div>
+    <div class="field">
+      <label>Conditions</label>
+      <select id="weatherConditions">
+        <option value="">Select conditions...</option>
+        <option>Clear</option><option>Partly Cloudy</option><option>Mostly Cloudy</option>
+        <option>Overcast</option><option>Light Rain</option><option>Rain</option>
+        <option>Heavy Rain</option><option>Fog/Mist</option><option>Snow</option><option>Windy</option>
+      </select>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Temperature (&deg;F)</label>
+        <input type="number" id="temperature" placeholder="e.g., 72">
+      </div>
+      <div class="field">
+        <label>Wind</label>
+        <select id="windConditions">
+          <option value="">Select...</option>
+          <option>Calm (0-3 mph)</option><option>Light (4-7 mph)</option>
+          <option>Gentle (8-12 mph)</option><option>Moderate (13-18 mph)</option>
+          <option>Fresh (19-24 mph)</option><option>Strong (25-31 mph)</option>
+          <option>Gale (32+ mph)</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Cloud Cover</label>
+      <div class="range-wrap">
+        <input type="range" id="cloudCover" min="0" max="100" step="5" value="0" oninput="document.getElementById('cloudVal').textContent=this.value+'%'">
+        <span class="range-val" id="cloudVal">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Birds Observed -->
+  <div class="section">
+    <div class="section-title">&#x1F985; Birds Observed</div>
+    <p style="font-size:12px;color:var(--text-light);margin-bottom:12px">Type a 4-letter code or common name to search. Species not on the list can be typed in directly.</p>
+    <div id="birdsList" class="list-items"></div>
+    <button class="add-btn" onclick="addBird()">+ Add Bird Observation</button>
+  </div>
+
+  <!-- Nesting Activity -->
+  <div class="section">
+    <div class="section-title">&#x1F95A; Nesting Activity</div>
+    <div id="nestingList" class="list-items"></div>
+    <button class="add-btn" onclick="addNesting()">+ Add Nesting Activity</button>
+  </div>
+
+  <!-- Nest Buffer -->
+  <div class="section">
+    <div class="section-title">&#x1F6E1; Nest Buffer</div>
+    <div class="field">
+      <label>Buffer Established?</label>
+      <div class="toggle-group">
+        <button class="toggle-btn" onclick="setBuffer(this,'Yes')">Yes</button>
+        <button class="toggle-btn" onclick="setBuffer(this,'No')">No</button>
+        <button class="toggle-btn" onclick="setBuffer(this,'N/A')">N/A</button>
+      </div>
+      <input type="hidden" id="bufferEstablished" value="">
+    </div>
+    <div class="row" id="bufferDetails" style="display:none">
+      <div class="field">
+        <label>Buffer Distance (ft)</label>
+        <input type="number" id="bufferDistance" placeholder="e.g., 300">
+      </div>
+      <div class="field">
+        <label>Buffer Notes</label>
+        <input type="text" id="bufferNotes" placeholder="Flagging, signage, etc.">
+      </div>
+    </div>
+    <div class="field" style="margin-top:14px">
+      <label>Anticipated Fledge Date</label>
+      <input type="date" id="fledgeDate">
+    </div>
+  </div>
+
+  <!-- Photos -->
+  <div class="section">
+    <div class="section-title">&#x1F4F7; Photos</div>
+    <div class="photo-grid" id="photoGrid">
+      <button class="capture-btn" onclick="capturePhoto()"><span class="icon">&#x1F4F7;</span><span>Take Photo</span></button>
+      <button class="capture-btn" onclick="uploadPhoto()"><span class="icon">&#x1F4C1;</span><span>Upload</span></button>
+    </div>
+    <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhoto(event)">
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handlePhoto(event)">
+    <div id="photoCaption" class="field" style="display:none;margin-top:8px">
+      <label>Photo Notes</label>
+      <input type="text" id="photoNotes" placeholder="Describe what the photos show">
+    </div>
+  </div>
+
+  <!-- Notable Observations -->
+  <div class="section">
+    <div class="section-title">&#x1F4DD; Notable Observations</div>
+    <div class="field">
+      <label>Special Status Species (Wildlife or Plants)</label>
+      <textarea id="specialStatus" placeholder="List any special-status species observed, including location and behavior..."></textarea>
+    </div>
+    <div class="field">
+      <label>Other Notes</label>
+      <textarea id="otherNotes" placeholder="Any other notable observations, disturbances, habitat conditions, etc."></textarea>
+    </div>
+  </div>
+
+  <div class="btn-row" style="margin-bottom:32px">
+    <button class="btn btn-primary" onclick="saveSurvey()">&#x1F4BE; Save Survey</button>
+    <button class="btn btn-secondary" onclick="confirmClear()">&#x1F5D1; Clear</button>
+  </div>
+</div>
+</div>
+
+<!-- SAVED VIEW -->
+<div id="view-saved" class="view">
+<div class="container">
+  <div class="section">
+    <div class="section-title">&#x1F4C2; Saved Surveys</div>
+    <div id="savedList"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-secondary btn-sm" onclick="exportAllCSV()">&#x1F4E5; Export All CSV</button>
+    <button class="btn btn-secondary btn-sm" onclick="exportJSON()">&#x1F4E5; Export JSON</button>
+    <button class="btn btn-secondary btn-sm" onclick="importData()">&#x1F4E4; Import</button>
+  </div>
+  <input type="file" id="importInput" accept=".csv,.json" style="display:none" onchange="handleImport(event)">
+</div>
+</div>
+
+<!-- REPORT VIEW -->
+<div id="view-report" class="view">
+<div class="container" id="reportContainer"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">Confirm</h3>
+    <p id="confirmMsg">Are you sure?</p>
+    <div class="btn-row">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirmAction">Delete</button>
+    </div>
+  </div>
+</div>
+<!-- Photo Viewer -->
+<div class="photo-modal" id="photoViewer" onclick="this.classList.remove('show')">
+  <button class="close-btn" onclick="document.getElementById('photoViewer').classList.remove('show')">&#x2715;</button>
+  <img id="photoViewerImg" src="">
+</div>
+
+<script>
+// =====================================================
+// CALIFORNIA BIRD SPECIES DATABASE (AOU/AOS 4-Letter Alpha Codes)
+// Based on CDFW/AOS taxonomy for species regularly occurring in California
+// =====================================================
+const CA_BIRDS = [
+  // Waterfowl
+  {code:"GWFG",name:"Greater White-fronted Goose"},
+  {code:"SNGO",name:"Snow Goose"},
+  {code:"ROGO",name:"Ross's Goose"},
+  {code:"BRAN",name:"Brant"},
+  {code:"CAGO",name:"Cackling Goose"},
+  {code:"CANG",name:"Canada Goose"},
+  {code:"TUSW",name:"Tundra Swan"},
+  {code:"WODU",name:"Wood Duck"},
+  {code:"GADW",name:"Gadwall"},
+  {code:"EUWI",name:"Eurasian Wigeon"},
+  {code:"AMWI",name:"American Wigeon"},
+  {code:"MALL",name:"Mallard"},
+  {code:"BWTE",name:"Blue-winged Teal"},
+  {code:"CITE",name:"Cinnamon Teal"},
+  {code:"NSHO",name:"Northern Shoveler"},
+  {code:"NOPI",name:"Northern Pintail"},
+  {code:"GWTE",name:"Green-winged Teal"},
+  {code:"CANV",name:"Canvasback"},
+  {code:"REDH",name:"Redhead"},
+  {code:"RNDU",name:"Ring-necked Duck"},
+  {code:"TUDU",name:"Tufted Duck"},
+  {code:"GRSC",name:"Greater Scaup"},
+  {code:"LESC",name:"Lesser Scaup"},
+  {code:"HARD",name:"Harlequin Duck"},
+  {code:"SUSC",name:"Surf Scoter"},
+  {code:"WWSC",name:"White-winged Scoter"},
+  {code:"BLSC",name:"Black Scoter"},
+  {code:"LTDU",name:"Long-tailed Duck"},
+  {code:"BUFF",name:"Bufflehead"},
+  {code:"COGO",name:"Common Goldeneye"},
+  {code:"BAGO",name:"Barrow's Goldeneye"},
+  {code:"HOME",name:"Hooded Merganser"},
+  {code:"COME",name:"Common Merganser"},
+  {code:"RBME",name:"Red-breasted Merganser"},
+  {code:"RUDU",name:"Ruddy Duck"},
+  // Upland Game Birds
+  {code:"CHUK",name:"Chukar"},
+  {code:"RNEP",name:"Ring-necked Pheasant"},
+  {code:"WITU",name:"Wild Turkey"},
+  {code:"MOQU",name:"Mountain Quail"},
+  {code:"CAQU",name:"California Quail"},
+  {code:"GAQU",name:"Gambel's Quail"},
+  // Grebes
+  {code:"PBGR",name:"Pied-billed Grebe"},
+  {code:"HOGR",name:"Horned Grebe"},
+  {code:"RNGR",name:"Red-necked Grebe"},
+  {code:"EAGR",name:"Eared Grebe"},
+  {code:"WEGR",name:"Western Grebe"},
+  {code:"CLGR",name:"Clark's Grebe"},
+  // Pigeons/Doves
+  {code:"ROPI",name:"Rock Pigeon"},
+  {code:"BTPI",name:"Band-tailed Pigeon"},
+  {code:"ECDO",name:"Eurasian Collared-Dove"},
+  {code:"INDO",name:"Inca Dove"},
+  {code:"COGD",name:"Common Ground Dove"},
+  {code:"WWDO",name:"White-winged Dove"},
+  {code:"MODO",name:"Mourning Dove"},
+  // Cuckoos/Roadrunner
+  {code:"YBCU",name:"Yellow-billed Cuckoo"},
+  {code:"GRRO",name:"Greater Roadrunner"},
+  // Nightjars/Swifts
+  {code:"LENI",name:"Lesser Nighthawk"},
+  {code:"CONI",name:"Common Nighthawk"},
+  {code:"COPW",name:"Common Poorwill"},
+  {code:"BCSW",name:"Black-chinned Swift"},
+  {code:"VASW",name:"Vaux's Swift"},
+  {code:"WTSW",name:"White-throated Swift"},
+  // Hummingbirds
+  {code:"BCHU",name:"Black-chinned Hummingbird"},
+  {code:"ANHU",name:"Anna's Hummingbird"},
+  {code:"COHU",name:"Costa's Hummingbird"},
+  {code:"CAHU",name:"Calliope Hummingbird"},
+  {code:"RUHU",name:"Rufous Hummingbird"},
+  {code:"ALHU",name:"Allen's Hummingbird"},
+  // Rails/Coots/Cranes
+  {code:"RLRA",name:"Ridgway's Rail"},
+  {code:"VIRA",name:"Virginia Rail"},
+  {code:"SORA",name:"Sora"},
+  {code:"COMO",name:"Common Gallinule"},
+  {code:"AMCO",name:"American Coot"},
+  {code:"SACR",name:"Sandhill Crane"},
+  // Stilts/Avocets
+  {code:"BNST",name:"Black-necked Stilt"},
+  {code:"AMAV",name:"American Avocet"},
+  // Plovers
+  {code:"BBPL",name:"Black-bellied Plover"},
+  {code:"AMGP",name:"American Golden-Plover"},
+  {code:"PAGP",name:"Pacific Golden-Plover"},
+  {code:"SNPL",name:"Snowy Plover"},
+  {code:"SEPL",name:"Semipalmated Plover"},
+  {code:"KILL",name:"Killdeer"},
+  {code:"MOPL",name:"Mountain Plover"},
+  // Sandpipers
+  {code:"WHIM",name:"Whimbrel"},
+  {code:"LBCU",name:"Long-billed Curlew"},
+  {code:"MAGO",name:"Marbled Godwit"},
+  {code:"RUTU",name:"Ruddy Turnstone"},
+  {code:"BLTU",name:"Black Turnstone"},
+  {code:"STIN",name:"Stilt Sandpiper"},
+  {code:"SAND",name:"Sanderling"},
+  {code:"DUNL",name:"Dunlin"},
+  {code:"WESA",name:"Western Sandpiper"},
+  {code:"LESA",name:"Least Sandpiper"},
+  {code:"PESA",name:"Pectoral Sandpiper"},
+  {code:"SESA",name:"Semipalmated Sandpiper"},
+  {code:"SBDO",name:"Short-billed Dowitcher"},
+  {code:"LBDO",name:"Long-billed Dowitcher"},
+  {code:"WIPH",name:"Wilson's Phalarope"},
+  {code:"RNPH",name:"Red-necked Phalarope"},
+  {code:"REPH",name:"Red Phalarope"},
+  {code:"SPSA",name:"Spotted Sandpiper"},
+  {code:"SOSA",name:"Solitary Sandpiper"},
+  {code:"WILL",name:"Willet"},
+  {code:"GRYE",name:"Greater Yellowlegs"},
+  {code:"LEYE",name:"Lesser Yellowlegs"},
+  {code:"WISN",name:"Wilson's Snipe"},
+  // Oystercatchers
+  {code:"BLOY",name:"Black Oystercatcher"},
+  // Gulls/Terns
+  {code:"BOGU",name:"Bonaparte's Gull"},
+  {code:"HEGU",name:"Heermann's Gull"},
+  {code:"MEGU",name:"Mew Gull"},
+  {code:"RBGU",name:"Ring-billed Gull"},
+  {code:"WEGU",name:"Western Gull"},
+  {code:"CAGU",name:"California Gull"},
+  {code:"HERG",name:"Herring Gull"},
+  {code:"THGU",name:"Thayer's Gull"},
+  {code:"GWGU",name:"Glaucous-winged Gull"},
+  {code:"GLGU",name:"Glaucous Gull"},
+  {code:"SAGU",name:"Sabine's Gull"},
+  {code:"BLKI",name:"Black-legged Kittiwake"},
+  {code:"LETE",name:"Least Tern"},
+  {code:"CATE",name:"Caspian Tern"},
+  {code:"BLSK",name:"Black Skimmer"},
+  {code:"COTE",name:"Common Tern"},
+  {code:"FOTE",name:"Forster's Tern"},
+  {code:"ROYT",name:"Royal Tern"},
+  {code:"ELTE",name:"Elegant Tern"},
+  // Alcids
+  {code:"COMU",name:"Common Murre"},
+  {code:"PIGU",name:"Pigeon Guillemot"},
+  {code:"SCRJ",name:"Scripps's Murrelet"},
+  {code:"XAMU",name:"Xantus's Murrelet"},
+  {code:"ANMU",name:"Ancient Murrelet"},
+  {code:"CAAU",name:"Cassin's Auklet"},
+  {code:"RHAU",name:"Rhinoceros Auklet"},
+  {code:"TUPU",name:"Tufted Puffin"},
+  // Loons
+  {code:"RTLO",name:"Red-throated Loon"},
+  {code:"PALO",name:"Pacific Loon"},
+  {code:"COLO",name:"Common Loon"},
+  // Pelagic
+  {code:"NOFU",name:"Northern Fulmar"},
+  {code:"PFSH",name:"Pink-footed Shearwater"},
+  {code:"BULS",name:"Buller's Shearwater"},
+  {code:"SOSH",name:"Sooty Shearwater"},
+  {code:"BLFO",name:"Black-footed Albatross"},
+  {code:"LESP",name:"Leach's Storm-Petrel"},
+  {code:"ASSP",name:"Ashy Storm-Petrel"},
+  {code:"BLSP",name:"Black Storm-Petrel"},
+  // Pelicans/Cormorants
+  {code:"BRPE",name:"Brown Pelican"},
+  {code:"AWPE",name:"American White Pelican"},
+  {code:"BRAC",name:"Brandt's Cormorant"},
+  {code:"DCCO",name:"Double-crested Cormorant"},
+  {code:"PECO",name:"Pelagic Cormorant"},
+  // Herons/Egrets/Ibis
+  {code:"AMBI",name:"American Bittern"},
+  {code:"LEBI",name:"Least Bittern"},
+  {code:"GBHE",name:"Great Blue Heron"},
+  {code:"GREG",name:"Great Egret"},
+  {code:"SNEG",name:"Snowy Egret"},
+  {code:"LBHE",name:"Little Blue Heron"},
+  {code:"TRHE",name:"Tricolored Heron"},
+  {code:"CAEG",name:"Cattle Egret"},
+  {code:"GRHE",name:"Green Heron"},
+  {code:"BCNH",name:"Black-crowned Night-Heron"},
+  {code:"WHIB",name:"White-faced Ibis"},
+  // Vultures
+  {code:"CACO",name:"California Condor"},
+  {code:"TUVU",name:"Turkey Vulture"},
+  // Raptors
+  {code:"OSPR",name:"Osprey"},
+  {code:"WTKI",name:"White-tailed Kite"},
+  {code:"BAEA",name:"Bald Eagle"},
+  {code:"GOEA",name:"Golden Eagle"},
+  {code:"NOHA",name:"Northern Harrier"},
+  {code:"SSHA",name:"Sharp-shinned Hawk"},
+  {code:"COHA",name:"Cooper's Hawk"},
+  {code:"RSHA",name:"Red-shouldered Hawk"},
+  {code:"SWHA",name:"Swainson's Hawk"},
+  {code:"RTHA",name:"Red-tailed Hawk"},
+  {code:"FEHA",name:"Ferruginous Hawk"},
+  {code:"RLHA",name:"Rough-legged Hawk"},
+  // Owls
+  {code:"BANO",name:"Barn Owl"},
+  {code:"FLOW",name:"Flammulated Owl"},
+  {code:"WSOW",name:"Western Screech-Owl"},
+  {code:"GHOW",name:"Great Horned Owl"},
+  {code:"BUOW",name:"Burrowing Owl"},
+  {code:"SPOW",name:"Spotted Owl"},
+  {code:"BDOW",name:"Barred Owl"},
+  {code:"GGOW",name:"Great Gray Owl"},
+  {code:"LEOW",name:"Long-eared Owl"},
+  {code:"SEOW",name:"Short-eared Owl"},
+  {code:"NSWO",name:"Northern Saw-whet Owl"},
+  {code:"NOPO",name:"Northern Pygmy-Owl"},
+  {code:"ELOW",name:"Elf Owl"},
+  // Kingfisher
+  {code:"BEKI",name:"Belted Kingfisher"},
+  // Woodpeckers
+  {code:"LEWO",name:"Lewis's Woodpecker"},
+  {code:"ACWO",name:"Acorn Woodpecker"},
+  {code:"WISA",name:"Williamson's Sapsucker"},
+  {code:"RBSA",name:"Red-breasted Sapsucker"},
+  {code:"DOWO",name:"Downy Woodpecker"},
+  {code:"NUWO",name:"Nuttall's Woodpecker"},
+  {code:"HAWO",name:"Hairy Woodpecker"},
+  {code:"WHWO",name:"White-headed Woodpecker"},
+  {code:"BBWO",name:"Black-backed Woodpecker"},
+  {code:"NOFL",name:"Northern Flicker"},
+  {code:"PIWO",name:"Pileated Woodpecker"},
+  // Falcons
+  {code:"AMKE",name:"American Kestrel"},
+  {code:"MERL",name:"Merlin"},
+  {code:"PRFA",name:"Prairie Falcon"},
+  {code:"PEFA",name:"Peregrine Falcon"},
+  // Flycatchers
+  {code:"OSFL",name:"Olive-sided Flycatcher"},
+  {code:"WEWP",name:"Western Wood-Pewee"},
+  {code:"WIFL",name:"Willow Flycatcher"},
+  {code:"HAFL",name:"Hammond's Flycatcher"},
+  {code:"GRFL",name:"Gray Flycatcher"},
+  {code:"DUFL",name:"Dusky Flycatcher"},
+  {code:"PSFL",name:"Pacific-slope Flycatcher"},
+  {code:"BLPH",name:"Black Phoebe"},
+  {code:"SAPH",name:"Say's Phoebe"},
+  {code:"VEFL",name:"Vermilion Flycatcher"},
+  {code:"ATFL",name:"Ash-throated Flycatcher"},
+  {code:"WEKI",name:"Western Kingbird"},
+  {code:"CAKI",name:"Cassin's Kingbird"},
+  // Shrikes
+  {code:"LOSH",name:"Loggerhead Shrike"},
+  {code:"NOSH",name:"Northern Shrike"},
+  // Vireos
+  {code:"BEVI",name:"Bell's Vireo"},
+  {code:"GRVI",name:"Gray Vireo"},
+  {code:"HUVI",name:"Hutton's Vireo"},
+  {code:"CAVI",name:"Cassin's Vireo"},
+  {code:"PLVI",name:"Plumbeous Vireo"},
+  {code:"WAVI",name:"Warbling Vireo"},
+  {code:"REVI",name:"Red-eyed Vireo"},
+  // Jays/Crows/Ravens
+  {code:"STJA",name:"Steller's Jay"},
+  {code:"CASJ",name:"California Scrub-Jay"},
+  {code:"ISSJ",name:"Island Scrub-Jay"},
+  {code:"PIJA",name:"Pinyon Jay"},
+  {code:"CLNU",name:"Clark's Nutcracker"},
+  {code:"YBMA",name:"Yellow-billed Magpie"},
+  {code:"AMCR",name:"American Crow"},
+  {code:"CORA",name:"Common Raven"},
+  // Larks
+  {code:"HOLA",name:"Horned Lark"},
+  // Swallows
+  {code:"PUMA",name:"Purple Martin"},
+  {code:"TRES",name:"Tree Swallow"},
+  {code:"VGSW",name:"Violet-green Swallow"},
+  {code:"NRWS",name:"Northern Rough-winged Swallow"},
+  {code:"BANS",name:"Bank Swallow"},
+  {code:"CLSW",name:"Cliff Swallow"},
+  {code:"BARS",name:"Barn Swallow"},
+  // Chickadees/Titmice/Bushtit
+  {code:"MOCH",name:"Mountain Chickadee"},
+  {code:"CBCH",name:"Chestnut-backed Chickadee"},
+  {code:"OATI",name:"Oak Titmouse"},
+  {code:"JUTI",name:"Juniper Titmouse"},
+  {code:"BUSH",name:"Bushtit"},
+  // Nuthatches/Creeper
+  {code:"RBNU",name:"Red-breasted Nuthatch"},
+  {code:"WBNU",name:"White-breasted Nuthatch"},
+  {code:"PYNU",name:"Pygmy Nuthatch"},
+  {code:"BRCR",name:"Brown Creeper"},
+  // Wrens
+  {code:"ROWR",name:"Rock Wren"},
+  {code:"CANW",name:"Canyon Wren"},
+  {code:"HOWR",name:"House Wren"},
+  {code:"PAWR",name:"Pacific Wren"},
+  {code:"MAWR",name:"Marsh Wren"},
+  {code:"BEWR",name:"Bewick's Wren"},
+  {code:"CACW",name:"Cactus Wren"},
+  // Dippers
+  {code:"AMDI",name:"American Dipper"},
+  // Kinglets/Gnatcatchers
+  {code:"GCKI",name:"Golden-crowned Kinglet"},
+  {code:"RCKI",name:"Ruby-crowned Kinglet"},
+  {code:"BGGN",name:"Blue-gray Gnatcatcher"},
+  {code:"CAGN",name:"California Gnatcatcher"},
+  {code:"BTGN",name:"Black-tailed Gnatcatcher"},
+  // Thrushes
+  {code:"WEBL",name:"Western Bluebird"},
+  {code:"MOBL",name:"Mountain Bluebird"},
+  {code:"TOSO",name:"Townsend's Solitaire"},
+  {code:"SWTH",name:"Swainson's Thrush"},
+  {code:"HETH",name:"Hermit Thrush"},
+  {code:"AMRO",name:"American Robin"},
+  {code:"VATH",name:"Varied Thrush"},
+  {code:"WREN",name:"Wrentit"},
+  // Mockingbirds/Thrashers
+  {code:"GRCA",name:"Gray Catbird"},
+  {code:"NOMO",name:"Northern Mockingbird"},
+  {code:"SATH",name:"Sage Thrasher"},
+  {code:"BETH",name:"Bendire's Thrasher"},
+  {code:"CATH",name:"California Thrasher"},
+  {code:"LETH",name:"LeConte's Thrasher"},
+  {code:"CRTH",name:"Crissal Thrasher"},
+  // Starling
+  {code:"EUST",name:"European Starling"},
+  // Waxwings/Phainopepla
+  {code:"CEWA",name:"Cedar Waxwing"},
+  {code:"PHAI",name:"Phainopepla"},
+  // Warblers
+  {code:"OCWA",name:"Orange-crowned Warbler"},
+  {code:"NAWA",name:"Nashville Warbler"},
+  {code:"LUWA",name:"Lucy's Warbler"},
+  {code:"NOPA",name:"Northern Parula"},
+  {code:"YEWA",name:"Yellow Warbler"},
+  {code:"YRWA",name:"Yellow-rumped Warbler"},
+  {code:"BTYW",name:"Black-throated Gray Warbler"},
+  {code:"TOWA",name:"Townsend's Warbler"},
+  {code:"HEWA",name:"Hermit Warbler"},
+  {code:"MGWA",name:"MacGillivray's Warbler"},
+  {code:"COYE",name:"Common Yellowthroat"},
+  {code:"WIWA",name:"Wilson's Warbler"},
+  {code:"YBRE",name:"Yellow-breasted Chat"},
+  // Tanagers
+  {code:"WETA",name:"Western Tanager"},
+  {code:"SUTA",name:"Summer Tanager"},
+  // Sparrows/Towhees/Juncos
+  {code:"GRTO",name:"Green-tailed Towhee"},
+  {code:"SPTO",name:"Spotted Towhee"},
+  {code:"CALT",name:"California Towhee"},
+  {code:"ABTO",name:"Abert's Towhee"},
+  {code:"RCSP",name:"Rufous-crowned Sparrow"},
+  {code:"CHSP",name:"Chipping Sparrow"},
+  {code:"BRSP",name:"Brewer's Sparrow"},
+  {code:"BTSP",name:"Black-throated Sparrow"},
+  {code:"LASP",name:"Lark Sparrow"},
+  {code:"SAGS",name:"Sagebrush Sparrow"},
+  {code:"SAVS",name:"Savannah Sparrow"},
+  {code:"GRSP",name:"Grasshopper Sparrow"},
+  {code:"FOSP",name:"Fox Sparrow"},
+  {code:"SOSP",name:"Song Sparrow"},
+  {code:"LISP",name:"Lincoln's Sparrow"},
+  {code:"WCSP",name:"White-crowned Sparrow"},
+  {code:"GCSP",name:"Golden-crowned Sparrow"},
+  {code:"DEJU",name:"Dark-eyed Junco"},
+  {code:"BELS",name:"Bell's Sparrow"},
+  {code:"VESP",name:"Vesper Sparrow"},
+  {code:"LABU",name:"Lark Bunting"},
+  // Cardinals/Grosbeaks/Buntings
+  {code:"BHGR",name:"Black-headed Grosbeak"},
+  {code:"BLGR",name:"Blue Grosbeak"},
+  {code:"LAZB",name:"Lazuli Bunting"},
+  {code:"INBU",name:"Indigo Bunting"},
+  {code:"PABU",name:"Painted Bunting"},
+  {code:"DICK",name:"Dickcissel"},
+  // Blackbirds/Orioles
+  {code:"BOBO",name:"Bobolink"},
+  {code:"RWBL",name:"Red-winged Blackbird"},
+  {code:"TRBL",name:"Tricolored Blackbird"},
+  {code:"WEME",name:"Western Meadowlark"},
+  {code:"YHBL",name:"Yellow-headed Blackbird"},
+  {code:"BRBL",name:"Brewer's Blackbird"},
+  {code:"GTGR",name:"Great-tailed Grackle"},
+  {code:"BHCO",name:"Brown-headed Cowbird"},
+  {code:"HOOR",name:"Hooded Oriole"},
+  {code:"BUOR",name:"Bullock's Oriole"},
+  {code:"SCOR",name:"Scott's Oriole"},
+  // Finches
+  {code:"GFRO",name:"Gray-crowned Rosy-Finch"},
+  {code:"PIGR",name:"Pine Grosbeak"},
+  {code:"CAFI",name:"Cassin's Finch"},
+  {code:"PUFI",name:"Purple Finch"},
+  {code:"HOFI",name:"House Finch"},
+  {code:"RECR",name:"Red Crossbill"},
+  {code:"PISI",name:"Pine Siskin"},
+  {code:"LEGO",name:"Lesser Goldfinch"},
+  {code:"LAGO",name:"Lawrence's Goldfinch"},
+  {code:"AMGO",name:"American Goldfinch"},
+  {code:"EVGR",name:"Evening Grosbeak"},
+  // Old World Sparrows
+  {code:"HOSP",name:"House Sparrow"},
+];
+
+// Build lookup maps
+const codeToName = {};
+const nameToCode = {};
+CA_BIRDS.forEach(b => {
+  codeToName[b.code] = b.name;
+  nameToCode[b.name.toUpperCase()] = b.code;
+});
+
+// =====================================================
+// DATA STORE
+// =====================================================
+let surveys = [];
+let currentEditId = null;
+let photos = [];
+let birdCount = 0;
+let nestCount = 0;
+
+const DB_NAME = 'NestingSurveyDB';
+const DB_VERSION = 2;
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('surveys')) d.createObjectStore('surveys', { keyPath: 'id' });
+    };
+    req.onsuccess = e => { db = e.target.result; resolve(db); };
+    req.onerror = e => reject(e);
+  });
+}
+
+async function loadSurveys() {
+  if (!db) await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('surveys', 'readonly');
+    const store = tx.objectStore('surveys');
+    const req = store.getAll();
+    req.onsuccess = () => { surveys = req.result || []; resolve(surveys); };
+    req.onerror = reject;
+  });
+}
+
+async function saveToDB(survey) {
+  if (!db) await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('surveys', 'readwrite');
+    tx.objectStore('surveys').put(survey);
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+
+async function deleteFromDB(id) {
+  if (!db) await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('surveys', 'readwrite');
+    tx.objectStore('surveys').delete(id);
+    tx.oncomplete = resolve;
+    tx.onerror = reject;
+  });
+}
+
+// =====================================================
+// GPS
+// =====================================================
+function getGPS() {
+  const btn = document.getElementById('gpsBtn');
+  btn.textContent = 'Getting GPS...';
+  btn.disabled = true;
+  if (!navigator.geolocation) {
+    toast('GPS not available on this device');
+    btn.textContent = '\u{1F4F1} Get GPS';
+    btn.disabled = false;
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      const acc = pos.coords.accuracy;
+      document.getElementById('latitude').value = lat;
+      document.getElementById('longitude').value = lon;
+      document.getElementById('gpsDisplay').textContent = `${lat}, ${lon}`;
+      document.getElementById('gpsDisplay').style.display = 'inline';
+      document.getElementById('gpsAccuracy').textContent = `\u00B1${Math.round(acc)}m`;
+      btn.innerHTML = '\u2705 GPS Set';
+      btn.disabled = false;
+      toast('GPS coordinates captured');
+    },
+    err => {
+      toast('GPS error: ' + err.message);
+      btn.textContent = '\u{1F4F1} Get GPS';
+      btn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+function toggleManualGPS() {
+  const el = document.getElementById('manualGPS');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function setManualGPS() {
+  const lat = document.getElementById('manualLat').value;
+  const lon = document.getElementById('manualLon').value;
+  if (!lat || !lon) { toast('Enter both lat and lon'); return; }
+  document.getElementById('latitude').value = lat;
+  document.getElementById('longitude').value = lon;
+  document.getElementById('gpsDisplay').textContent = `${parseFloat(lat).toFixed(6)}, ${parseFloat(lon).toFixed(6)}`;
+  document.getElementById('gpsDisplay').style.display = 'inline';
+  document.getElementById('gpsAccuracy').textContent = '(manual)';
+  document.getElementById('manualGPS').style.display = 'none';
+  toast('Coordinates set');
+}
+
+// =====================================================
+// SPECIES AUTOCOMPLETE
+// =====================================================
+function setupAutocomplete(codeInput, nameInput) {
+  let activeList = null;
+
+  function createDropdown(input) {
+    let list = input.parentElement.querySelector('.autocomplete-list');
+    if (!list) {
+      list = document.createElement('div');
+      list.className = 'autocomplete-list';
+      input.parentElement.classList.add('autocomplete-wrap');
+      input.parentElement.appendChild(list);
+    }
+    return list;
+  }
+
+  function doSearch(input, searchBy) {
+    const val = input.value.trim().toUpperCase();
+    const list = createDropdown(input);
+    if (val.length < 1) { list.classList.remove('show'); return; }
+    let matches;
+    if (searchBy === 'code') {
+      matches = CA_BIRDS.filter(b => b.code.toUpperCase().startsWith(val)).slice(0, 12);
+    } else {
+      matches = CA_BIRDS.filter(b => b.name.toUpperCase().includes(val)).slice(0, 12);
+    }
+    if (matches.length === 0) { list.classList.remove('show'); return; }
+    list.innerHTML = matches.map((b, i) =>
+      `<div class="autocomplete-item" data-code="${b.code}" data-name="${b.name}">
+        <span class="code">${b.code}</span><span class="name">${b.name}</span>
+      </div>`
+    ).join('');
+    list.classList.add('show');
+    activeList = list;
+    list.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('mousedown', e => {
+        e.preventDefault();
+        codeInput.value = item.dataset.code;
+        nameInput.value = item.dataset.name;
+        list.classList.remove('show');
+      });
+    });
+  }
+
+  codeInput.addEventListener('input', () => doSearch(codeInput, 'code'));
+  codeInput.addEventListener('blur', () => {
+    setTimeout(() => {
+      const list = codeInput.parentElement.querySelector('.autocomplete-list');
+      if (list) list.classList.remove('show');
+      // Auto-fill name if exact code match
+      const code = codeInput.value.trim().toUpperCase();
+      if (codeToName[code] && !nameInput.value) {
+        nameInput.value = codeToName[code];
+      }
+    }, 200);
+  });
+
+  nameInput.addEventListener('input', () => doSearch(nameInput, 'name'));
+  nameInput.addEventListener('blur', () => {
+    setTimeout(() => {
+      const list = nameInput.parentElement.querySelector('.autocomplete-list');
+      if (list) list.classList.remove('show');
+      // Auto-fill code if exact name match
+      const name = nameInput.value.trim().toUpperCase();
+      if (nameToCode[name] && !codeInput.value) {
+        codeInput.value = nameToCode[name];
+      }
+    }, 200);
+  });
+}
+
+// =====================================================
+// BIRD OBSERVATIONS
+// =====================================================
+function addBird(data) {
+  birdCount++;
+  const id = birdCount;
+  const div = document.createElement('div');
+  div.className = 'list-item';
+  div.id = 'bird-' + id;
+  div.innerHTML = `
+    <button class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
+    <div class="row" style="margin-bottom:8px">
+      <div class="field"><label>Species Code</label><input type="text" class="bird-code" placeholder="e.g., RTHA" value="${data?.code||''}" style="text-transform:uppercase" autocomplete="off"></div>
+      <div class="field"><label>Common Name</label><input type="text" class="bird-name" placeholder="e.g., Red-tailed Hawk" value="${data?.name||''}" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Count</label><input type="number" class="bird-count" placeholder="#" value="${data?.count||'1'}" min="1"></div>
+      <div class="field"><label>Behavior</label>
+        <select class="bird-behavior">
+          <option value="">Select...</option>
+          <option ${data?.behavior==='Flying'?'selected':''}>Flying</option>
+          <option ${data?.behavior==='Perched'?'selected':''}>Perched</option>
+          <option ${data?.behavior==='Foraging'?'selected':''}>Foraging</option>
+          <option ${data?.behavior==='Singing/Calling'?'selected':''}>Singing/Calling</option>
+          <option ${data?.behavior==='Nesting'?'selected':''}>Nesting</option>
+          <option ${data?.behavior==='Carrying Material'?'selected':''}>Carrying Material</option>
+          <option ${data?.behavior==='Carrying Food'?'selected':''}>Carrying Food</option>
+          <option ${data?.behavior==='Alarm Calling'?'selected':''}>Alarm Calling</option>
+          <option ${data?.behavior==='Fledgling'?'selected':''}>Fledgling</option>
+          <option ${data?.behavior==='Other'?'selected':''}>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-top:8px"><label>Notes</label><input type="text" class="bird-notes" placeholder="Location, additional details..." value="${data?.notes||''}"></div>
+  `;
+  document.getElementById('birdsList').appendChild(div);
+  // Setup autocomplete
+  const codeInp = div.querySelector('.bird-code');
+  const nameInp = div.querySelector('.bird-name');
+  setupAutocomplete(codeInp, nameInp);
+}
+
+// =====================================================
+// NESTING ACTIVITY
+// =====================================================
+function addNesting(data) {
+  nestCount++;
+  const id = nestCount;
+  const div = document.createElement('div');
+  div.className = 'list-item';
+  div.id = 'nest-' + id;
+  div.innerHTML = `
+    <button class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
+    <div class="row" style="margin-bottom:8px">
+      <div class="field"><label>Species</label><input type="text" class="nest-species" placeholder="Code or name" value="${data?.species||''}" style="text-transform:uppercase" autocomplete="off"></div>
+      <div class="field"><label>Activity Type</label>
+        <select class="nest-activity">
+          <option value="">Select...</option>
+          <option ${data?.activity==='Nest Building'?'selected':''}>Nest Building</option>
+          <option ${data?.activity==='Incubating'?'selected':''}>Incubating</option>
+          <option ${data?.activity==='Brooding'?'selected':''}>Brooding</option>
+          <option ${data?.activity==='Feeding Young'?'selected':''}>Feeding Young</option>
+          <option ${data?.activity==='Fledging'?'selected':''}>Fledging</option>
+          <option ${data?.activity==='Nest Defense'?'selected':''}>Nest Defense</option>
+          <option ${data?.activity==='Copulation'?'selected':''}>Copulation</option>
+          <option ${data?.activity==='Courtship Display'?'selected':''}>Courtship Display</option>
+          <option ${data?.activity==='Nest Maintenance'?'selected':''}>Nest Maintenance</option>
+          <option ${data?.activity==='Abandoned'?'selected':''}>Abandoned</option>
+          <option ${data?.activity==='Failed'?'selected':''}>Failed</option>
+          <option ${data?.activity==='Other'?'selected':''}>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Nest Location</label><input type="text" class="nest-location" placeholder="Tree, ledge, ground..." value="${data?.location||''}"></div>
+      <div class="field"><label>Eggs/Young Count</label><input type="number" class="nest-count" placeholder="#" value="${data?.count||''}" min="0"></div>
+    </div>
+    <div class="field" style="margin-top:8px">
+      <label>Nest GPS</label>
+      <div class="gps-display">
+        <button class="gps-btn btn-sm" onclick="getNestGPS(this)">&#x1F4CD; Get GPS</button>
+        <input type="text" class="nest-gps" placeholder="lat, lon" value="${data?.gps||''}" style="flex:1;min-width:120px">
+      </div>
+    </div>
+    <div class="field" style="margin-top:8px"><label>Notes</label><input type="text" class="nest-notes" placeholder="Additional nesting details..." value="${data?.notes||''}"></div>
+  `;
+  document.getElementById('nestingList').appendChild(div);
+  // Setup autocomplete for nesting species
+  const spInp = div.querySelector('.nest-species');
+  // Simple species autocomplete for nesting
+  spInp.addEventListener('input', function() {
+    const val = this.value.trim().toUpperCase();
+    let list = this.parentElement.querySelector('.autocomplete-list');
+    if (!list) {
+      list = document.createElement('div');
+      list.className = 'autocomplete-list';
+      this.parentElement.classList.add('autocomplete-wrap');
+      this.parentElement.appendChild(list);
+    }
+    if (val.length < 1) { list.classList.remove('show'); return; }
+    const matches = CA_BIRDS.filter(b => b.code.startsWith(val) || b.name.toUpperCase().includes(val)).slice(0, 10);
+    if (matches.length === 0) { list.classList.remove('show'); return; }
+    list.innerHTML = matches.map(b =>
+      `<div class="autocomplete-item" data-code="${b.code}" data-name="${b.name}"><span class="code">${b.code}</span><span class="name">${b.name}</span></div>`
+    ).join('');
+    list.classList.add('show');
+    list.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('mousedown', e => {
+        e.preventDefault();
+        spInp.value = item.dataset.code;
+        list.classList.remove('show');
+      });
+    });
+  });
+  spInp.addEventListener('blur', () => {
+    setTimeout(() => {
+      const list = spInp.parentElement.querySelector('.autocomplete-list');
+      if (list) list.classList.remove('show');
+    }, 200);
+  });
+}
+
+function getNestGPS(btn) {
+  if (!navigator.geolocation) { toast('GPS not available'); return; }
+  btn.textContent = '...';
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const gpsInput = btn.closest('.gps-display').querySelector('.nest-gps');
+      gpsInput.value = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+      btn.textContent = '\u2705';
+    },
+    err => { toast('GPS error'); btn.textContent = '\u{1F4CD} Get GPS'; },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+// =====================================================
+// NEST BUFFER
+// =====================================================
+function setBuffer(btn, val) {
+  document.getElementById('bufferEstablished').value = val;
+  btn.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('bufferDetails').style.display = val === 'Yes' ? 'grid' : 'none';
+}
+
+// =====================================================
+// PHOTOS
+// =====================================================
+function capturePhoto() { document.getElementById('cameraInput').click(); }
+function uploadPhoto() { document.getElementById('fileInput').click(); }
+function compressImage(dataUrl, maxWidth, quality) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxWidth) { h = h * maxWidth / w; w = maxWidth; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.src = dataUrl;
+  });
+}
+function handlePhoto(e) {
+  for (const file of e.target.files) {
+    const reader = new FileReader();
+    reader.onload = async ev => {
+      // Compress to max 1200px wide, 0.7 quality to save storage
+      const compressed = await compressImage(ev.target.result, 1200, 0.7);
+      photos.push({ data: compressed, name: file.name });
+      renderPhotos();
+    };
+    reader.readAsDataURL(file);
+  }
+  e.target.value = '';
+}
+function renderPhotos() {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  photos.forEach((p, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'photo-thumb-wrap';
+    wrap.innerHTML = `<img class="photo-thumb" src="${p.data}" onclick="viewPhoto(${i})"><button class="remove-btn" onclick="photos.splice(${i},1);renderPhotos()">&times;</button>`;
+    grid.appendChild(wrap);
+  });
+  const cap = document.createElement('button'); cap.className='capture-btn'; cap.onclick=capturePhoto;
+  cap.innerHTML='<span class="icon">&#x1F4F7;</span><span>Take Photo</span>'; grid.appendChild(cap);
+  const upl = document.createElement('button'); upl.className='capture-btn'; upl.onclick=uploadPhoto;
+  upl.innerHTML='<span class="icon">&#x1F4C1;</span><span>Upload</span>'; grid.appendChild(upl);
+  document.getElementById('photoCaption').style.display = photos.length > 0 ? 'block' : 'none';
+}
+function viewPhoto(i) {
+  document.getElementById('photoViewerImg').src = photos[i].data;
+  document.getElementById('photoViewer').classList.add('show');
+}
+
+// =====================================================
+// FORM COLLECTION
+// =====================================================
+function collectFormData() {
+  const birds = [];
+  document.querySelectorAll('#birdsList .list-item').forEach(item => {
+    const code = (item.querySelector('.bird-code')?.value || '').toUpperCase().trim();
+    let name = item.querySelector('.bird-name')?.value || '';
+    // Auto-fill if possible
+    if (code && !name && codeToName[code]) name = codeToName[code];
+    if (name && !code) {
+      const uc = name.toUpperCase();
+      const found = CA_BIRDS.find(b => b.name.toUpperCase() === uc);
+      if (found) name = found.name;
+    }
+    birds.push({
+      code, name,
+      count: item.querySelector('.bird-count')?.value || '1',
+      behavior: item.querySelector('.bird-behavior')?.value || '',
+      notes: item.querySelector('.bird-notes')?.value || ''
+    });
+  });
+  const nesting = [];
+  document.querySelectorAll('#nestingList .list-item').forEach(item => {
+    const species = (item.querySelector('.nest-species')?.value || '').toUpperCase().trim();
+    nesting.push({
+      species,
+      speciesName: codeToName[species] || species,
+      activity: item.querySelector('.nest-activity')?.value || '',
+      location: item.querySelector('.nest-location')?.value || '',
+      count: item.querySelector('.nest-count')?.value || '',
+      gps: item.querySelector('.nest-gps')?.value || '',
+      notes: item.querySelector('.nest-notes')?.value || ''
+    });
+  });
+  return {
+    id: currentEditId || Date.now().toString(),
+    timestamp: new Date().toISOString(),
+    projectName: document.getElementById('projectName').value,
+    observers: document.getElementById('observers').value,
+    surveyDate: document.getElementById('surveyDate').value,
+    startTime: document.getElementById('startTime').value,
+    endTime: document.getElementById('endTime').value,
+    siteName: document.getElementById('siteName').value,
+    latitude: document.getElementById('latitude').value,
+    longitude: document.getElementById('longitude').value,
+    weatherConditions: document.getElementById('weatherConditions').value,
+    temperature: document.getElementById('temperature').value,
+    windConditions: document.getElementById('windConditions').value,
+    cloudCover: document.getElementById('cloudCover').value,
+    birds, nesting,
+    bufferEstablished: document.getElementById('bufferEstablished').value,
+    bufferDistance: document.getElementById('bufferDistance').value,
+    bufferNotes: document.getElementById('bufferNotes').value,
+    fledgeDate: document.getElementById('fledgeDate').value,
+    photos: photos.map(p => ({ data: p.data, name: p.name })),
+    photoNotes: document.getElementById('photoNotes').value,
+    specialStatus: document.getElementById('specialStatus').value,
+    otherNotes: document.getElementById('otherNotes').value
+  };
+}
+
+// =====================================================
+// SAVE / CLEAR / LOAD
+// =====================================================
+async function saveSurvey() {
+  const data = collectFormData();
+  if (!data.projectName && !data.surveyDate) { toast('Enter a project name or date'); return; }
+  await saveToDB(data);
+  await loadSurveys();
+  currentEditId = data.id;
+  toast('Survey saved!');
+}
+
+function confirmClear() {
+  // Check if form has any data worth saving
+  const hasData = document.getElementById('projectName').value ||
+    document.querySelectorAll('#birdsList .list-item').length > 0 ||
+    document.querySelectorAll('#nestingList .list-item').length > 0 ||
+    photos.length > 0;
+  if (!hasData) { clearForm(); return; }
+  document.getElementById('confirmTitle').textContent = 'Clear Form';
+  document.getElementById('confirmMsg').textContent = 'Clear all form data? Any unsaved changes will be lost.';
+  const btn = document.getElementById('confirmAction');
+  btn.textContent = 'Clear';
+  btn.onclick = () => { clearForm(); closeModal(); };
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function clearForm() {
+  currentEditId = null;
+  ['projectName','observers','surveyDate','startTime','endTime','siteName','latitude','longitude',
+   'weatherConditions','temperature','windConditions','bufferEstablished','bufferDistance','bufferNotes',
+   'fledgeDate','photoNotes','specialStatus','otherNotes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('cloudCover').value = 0;
+  document.getElementById('cloudVal').textContent = '0%';
+  document.getElementById('birdsList').innerHTML = '';
+  document.getElementById('nestingList').innerHTML = '';
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('bufferDetails').style.display = 'none';
+  document.getElementById('gpsDisplay').style.display = 'none';
+  document.getElementById('gpsAccuracy').textContent = '';
+  document.getElementById('gpsBtn').innerHTML = '\u{1F4F1} Get GPS';
+  document.getElementById('manualGPS').style.display = 'none';
+  photos = []; renderPhotos();
+  birdCount = 0; nestCount = 0;
+  // Reset date/time to now
+  document.getElementById('surveyDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('startTime').value = new Date().toTimeString().slice(0,5);
+  toast('Form cleared');
+}
+
+function loadSurveyIntoForm(survey) {
+  clearForm();
+  currentEditId = survey.id;
+  document.getElementById('projectName').value = survey.projectName || '';
+  document.getElementById('observers').value = survey.observers || '';
+  document.getElementById('surveyDate').value = survey.surveyDate || '';
+  document.getElementById('startTime').value = survey.startTime || '';
+  document.getElementById('endTime').value = survey.endTime || '';
+  document.getElementById('siteName').value = survey.siteName || '';
+  document.getElementById('latitude').value = survey.latitude || '';
+  document.getElementById('longitude').value = survey.longitude || '';
+  if (survey.latitude && survey.longitude) {
+    document.getElementById('gpsDisplay').textContent = `${survey.latitude}, ${survey.longitude}`;
+    document.getElementById('gpsDisplay').style.display = 'inline';
+  }
+  document.getElementById('weatherConditions').value = survey.weatherConditions || '';
+  document.getElementById('temperature').value = survey.temperature || '';
+  document.getElementById('windConditions').value = survey.windConditions || '';
+  document.getElementById('cloudCover').value = survey.cloudCover || 0;
+  document.getElementById('cloudVal').textContent = (survey.cloudCover||0) + '%';
+  if (survey.birds) survey.birds.forEach(b => addBird(b));
+  if (survey.nesting) survey.nesting.forEach(n => addNesting(n));
+  if (survey.bufferEstablished) {
+    document.getElementById('bufferEstablished').value = survey.bufferEstablished;
+    document.querySelectorAll('.toggle-btn').forEach(b => { if (b.textContent===survey.bufferEstablished) b.classList.add('active'); });
+    if (survey.bufferEstablished==='Yes') document.getElementById('bufferDetails').style.display='grid';
+  }
+  document.getElementById('bufferDistance').value = survey.bufferDistance || '';
+  document.getElementById('bufferNotes').value = survey.bufferNotes || '';
+  document.getElementById('fledgeDate').value = survey.fledgeDate || '';
+  photos = survey.photos || []; renderPhotos();
+  document.getElementById('photoNotes').value = survey.photoNotes || '';
+  document.getElementById('specialStatus').value = survey.specialStatus || '';
+  document.getElementById('otherNotes').value = survey.otherNotes || '';
+  showView('form');
+  toast('Survey loaded');
+}
+
+// =====================================================
+// SAVED LIST
+// =====================================================
+function renderSavedList() {
+  const container = document.getElementById('savedList');
+  if (surveys.length===0) {
+    container.innerHTML='<div class="empty-state"><div class="icon">&#x1F4CB;</div><h3>No saved surveys</h3><p>Complete and save a survey to see it here.</p></div>';
+    return;
+  }
+  const sorted=[...surveys].sort((a,b)=>(b.surveyDate||'').localeCompare(a.surveyDate||''));
+  container.innerHTML=sorted.map(s=>{
+    const birdSpp=[...new Set((s.birds||[]).map(b=>b.code||b.name).filter(Boolean))];
+    return `<div class="survey-card">
+      <div class="survey-card-info" onclick="loadSurveyIntoForm(surveys.find(x=>x.id==='${s.id}'))">
+        <h3>${s.projectName||'Untitled'}</h3>
+        <p>${s.surveyDate||'No date'} &bull; ${s.observers||''} ${s.siteName?'&bull; '+s.siteName:''}</p>
+        <p style="font-size:12px;color:#888;margin-top:2px">${birdSpp.join(', ')||'No birds'} ${s.latitude?'&bull; GPS: '+s.latitude+', '+s.longitude:''}</p>
+      </div>
+      <div class="survey-card-actions">
+        <button class="icon-btn" onclick="generatePDFForSurvey('${s.id}')" title="PDF Report">&#x1F4C4;</button>
+        <button class="icon-btn" onclick="exportSingleCSV('${s.id}')" title="Export CSV">&#x1F4E5;</button>
+        <button class="icon-btn danger" onclick="confirmDelete('${s.id}')" title="Delete">&#x1F5D1;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// =====================================================
+// DELETE
+// =====================================================
+function confirmDelete(id) {
+  document.getElementById('confirmTitle').textContent='Delete Survey';
+  document.getElementById('confirmMsg').textContent='Permanently delete this survey?';
+  document.getElementById('confirmAction').onclick=async()=>{await deleteFromDB(id);await loadSurveys();renderSavedList();closeModal();toast('Deleted');};
+  document.getElementById('confirmModal').classList.add('show');
+}
+function closeModal(){document.getElementById('confirmModal').classList.remove('show');}
+
+// =====================================================
+// CSV EXPORT/IMPORT
+// =====================================================
+function getCSVHeader(){
+  return 'ID,Project Name,Observers,Date,Start,End,Site,Latitude,Longitude,Weather,Temp(F),Wind,Cloud%,Birds(code:name:count:behavior),Nesting(species:activity:location:gps),Buffer,Buffer Dist(ft),Buffer Notes,Fledge Date,Photo Count,Photo Notes,Special Status,Other Notes';
+}
+function surveyToCSVRow(s){
+  const birds=(s.birds||[]).map(b=>`${b.code}:${b.name}:${b.count}:${b.behavior}`).join('|');
+  const nesting=(s.nesting||[]).map(n=>`${n.species}:${n.activity}:${n.location}:${n.gps||''}`).join('|');
+  const fields=[s.id,s.projectName,s.observers,s.surveyDate,s.startTime,s.endTime,s.siteName,s.latitude,s.longitude,s.weatherConditions,s.temperature,s.windConditions,s.cloudCover+'%',birds,nesting,s.bufferEstablished,s.bufferDistance,s.bufferNotes,s.fledgeDate,(s.photos||[]).length,s.photoNotes,s.specialStatus,s.otherNotes];
+  return fields.map(f=>`"${String(f||'').replace(/"/g,'""')}"`).join(',');
+}
+function exportAllCSV(){
+  if(!surveys.length){toast('No surveys');return;}
+  downloadFile([getCSVHeader(),...surveys.map(surveyToCSVRow)].join('\n'),`bird-surveys-${new Date().toISOString().slice(0,10)}.csv`,'text/csv');
+  toast('CSV exported');
+}
+function exportSingleCSV(id){
+  const s=surveys.find(x=>x.id===id);if(!s)return;
+  downloadFile([getCSVHeader(),surveyToCSVRow(s)].join('\n'),`survey-${s.surveyDate||'undated'}.csv`,'text/csv');
+  toast('CSV exported');
+}
+function exportJSON(){
+  if(!surveys.length){toast('No surveys');return;}
+  // Strip photo data for smaller export, keep metadata
+  const exportData=surveys.map(s=>({...s,photos:(s.photos||[]).map(p=>({name:p.name,hasData:true}))}));
+  downloadFile(JSON.stringify(surveys,null,2),`bird-surveys-${new Date().toISOString().slice(0,10)}.json`,'application/json');
+  toast('JSON exported (with photos)');
+}
+function downloadFile(content,filename,type){
+  const blob=new Blob([content],{type});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+}
+function importData(){document.getElementById('importInput').click();}
+function handleImport(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async(ev)=>{
+    const text=ev.target.result;
+    if(file.name.endsWith('.json')){
+      try{
+        const data=JSON.parse(text);
+        const arr=Array.isArray(data)?data:[data];
+        for(const s of arr){s.id=s.id||Date.now().toString()+Math.random().toString(36).slice(2);await saveToDB(s);}
+        await loadSurveys();renderSavedList();toast(`Imported ${arr.length} survey(s)`);
+      }catch(err){toast('JSON parse error');}
+    }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// =====================================================
+// PDF REPORT GENERATION (direct PDF download via html2pdf.js)
+// =====================================================
+async function generatePDFForSurvey(id) {
+  const s = surveys.find(x => x.id === id);
+  if (!s) return;
+  await generatePDFReport([s], `Survey Report - ${s.projectName || 'Untitled'}`);
+}
+
+async function generatePDFReport(surveyList, title) {
+  // Check if library loaded
+  if (typeof html2pdf === 'undefined') {
+    toast('PDF library still loading... try again in a few seconds');
+    return;
+  }
+  toast('Generating PDF... please wait');
+
+  // Build report HTML in a hidden container
+  const now = new Date().toLocaleDateString();
+  const container = document.createElement('div');
+  container.id = 'pdf-render-container';
+  container.style.cssText = 'position:fixed;left:-9999px;top:0;width:750px;background:white;padding:40px 50px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#222;line-height:1.4;';
+
+  let html = '';
+  html += `<h1 style="color:#2e7d32;font-size:20px;border-bottom:3px solid #2e7d32;padding-bottom:6px;margin-bottom:12px;">Nesting Bird Survey Report</h1>`;
+  html += `<p style="color:#666;margin-bottom:12px;">Generated: ${now} | Surveys: ${surveyList.length}</p>`;
+
+  // Summary stats if multiple surveys
+  if (surveyList.length > 1) {
+    const allBirds = surveyList.flatMap(s => s.birds || []);
+    const totalObs = allBirds.reduce((sum, b) => sum + (parseInt(b.count) || 1), 0);
+    const uniqueSpp = [...new Set(allBirds.map(b => (b.code || b.name || '').toUpperCase()).filter(Boolean))];
+    const allNesting = surveyList.flatMap(s => s.nesting || []);
+    html += `<div style="display:flex;gap:12px;margin:8px 0;flex-wrap:wrap;">
+      <div style="background:#e8f5e9;border-radius:6px;padding:10px 16px;text-align:center;flex:1;min-width:100px;"><div style="font-size:22px;font-weight:800;color:#2e7d32;">${surveyList.length}</div><div style="font-size:9px;color:#666;text-transform:uppercase;">Surveys</div></div>
+      <div style="background:#e8f5e9;border-radius:6px;padding:10px 16px;text-align:center;flex:1;min-width:100px;"><div style="font-size:22px;font-weight:800;color:#2e7d32;">${uniqueSpp.length}</div><div style="font-size:9px;color:#666;text-transform:uppercase;">Species</div></div>
+      <div style="background:#e8f5e9;border-radius:6px;padding:10px 16px;text-align:center;flex:1;min-width:100px;"><div style="font-size:22px;font-weight:800;color:#2e7d32;">${totalObs}</div><div style="font-size:9px;color:#666;text-transform:uppercase;">Individuals</div></div>
+      <div style="background:#e8f5e9;border-radius:6px;padding:10px 16px;text-align:center;flex:1;min-width:100px;"><div style="font-size:22px;font-weight:800;color:#2e7d32;">${allNesting.length}</div><div style="font-size:9px;color:#666;text-transform:uppercase;">Nest Activities</div></div>
+    </div>`;
+  }
+
+  surveyList.forEach((s, idx) => {
+    if (idx > 0) html += `<div style="page-break-before:always;"></div>`;
+    html += `<h2 style="color:#2e7d32;font-size:14px;margin:20px 0 8px;border-bottom:1px solid #c8e6c9;padding-bottom:4px;">Survey: ${s.projectName || 'Untitled'}</h2>`;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin:8px 0;">
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Date:</span>${s.surveyDate || '-'}</div>
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Observer(s):</span>${s.observers || '-'}</div>
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Time:</span>${s.startTime || '-'} to ${s.endTime || '-'}</div>
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Site:</span>${s.siteName || '-'}</div>
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">GPS:</span>${s.latitude && s.longitude ? s.latitude+', '+s.longitude : 'Not recorded'}</div>
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Weather:</span>${s.weatherConditions || '-'}, ${s.temperature || '-'}&deg;F</div>
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Wind:</span>${s.windConditions || '-'}</div>
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Cloud Cover:</span>${s.cloudCover || '0'}%</div>
+    </div>`;
+
+    // Birds
+    if ((s.birds||[]).length > 0) {
+      html += `<h3 style="font-size:12px;color:#333;margin:10px 0 4px;">Birds Observed</h3>`;
+      html += `<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:10px;"><tr>`;
+      ['Code','Common Name','Count','Behavior','Notes'].forEach(h => {
+        html += `<th style="background:#2e7d32;color:white;padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;">${h}</th>`;
+      });
+      html += `</tr>`;
+      s.birds.forEach((b, bi) => {
+        const name = b.name || codeToName[b.code] || '';
+        const bg = bi % 2 === 1 ? 'background:#f5f8f5;' : '';
+        html += `<tr style="${bg}"><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;"><strong>${b.code||'-'}</strong></td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;">${name}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;">${b.count||'1'}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;">${b.behavior||'-'}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;">${b.notes||'-'}</td></tr>`;
+      });
+      html += `</table>`;
+    }
+
+    // Nesting
+    if ((s.nesting||[]).length > 0) {
+      html += `<h3 style="font-size:12px;color:#333;margin:10px 0 4px;">Nesting Activity</h3>`;
+      html += `<table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:10px;"><tr>`;
+      ['Species','Activity','Location','Eggs/Young','Nest GPS','Notes'].forEach(h => {
+        html += `<th style="background:#2e7d32;color:white;padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;">${h}</th>`;
+      });
+      html += `</tr>`;
+      s.nesting.forEach((n, ni) => {
+        const name = codeToName[n.species] || n.speciesName || n.species;
+        const bg = ni % 2 === 1 ? 'background:#f5f8f5;' : '';
+        html += `<tr style="${bg}"><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;"><strong>${n.species}</strong> ${name!==n.species?'('+name+')':''}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;">${n.activity||'-'}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;">${n.location||'-'}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;">${n.count||'-'}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;font-size:9px;">${n.gps||'-'}</td><td style="padding:5px 8px;border-bottom:1px solid #e0e0e0;">${n.notes||'-'}</td></tr>`;
+      });
+      html += `</table>`;
+    }
+
+    // Buffer
+    html += `<h3 style="font-size:12px;color:#333;margin:10px 0 4px;">Nest Buffer</h3>`;
+    html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 20px;margin:8px 0;">
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Established:</span>${s.bufferEstablished || '-'}</div>
+      ${s.bufferEstablished==='Yes'?`<div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Distance:</span>${s.bufferDistance||'-'} ft</div>
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Notes:</span>${s.bufferNotes||'-'}</div>`:''}
+      <div style="display:flex;gap:6px;"><span style="font-weight:bold;color:#555;min-width:90px;">Fledge Date:</span>${s.fledgeDate || '-'}</div>
+    </div>`;
+
+    // Special Status
+    if (s.specialStatus) {
+      html += `<div style="background:#fff8e1;border-left:4px solid #ff8f00;padding:8px 12px;margin:8px 0;border-radius:0 4px 4px 0;"><strong>Special Status Species:</strong><br>${s.specialStatus}</div>`;
+    }
+    if (s.otherNotes) {
+      html += `<h3 style="font-size:12px;color:#333;margin:10px 0 4px;">Other Notes</h3><p>${s.otherNotes}</p>`;
+    }
+
+    // Photos
+    if ((s.photos||[]).length > 0) {
+      html += `<h3 style="font-size:12px;color:#333;margin:10px 0 4px;">Photos${s.photoNotes?' - '+s.photoNotes:''}</h3>`;
+      s.photos.forEach((p, i) => {
+        if (p.data) {
+          html += `<div style="display:inline-block;width:48%;margin:1%;vertical-align:top;page-break-inside:avoid;break-inside:avoid;"><img src="${p.data}" style="width:100%;max-height:280px;object-fit:contain;border:1px solid #ddd;border-radius:4px;"><div style="font-size:9px;color:#666;text-align:center;">${p.name || 'Photo '+(i+1)}</div></div>`;
+        }
+      });
+    }
+  });
+
+  html += `<div style="margin-top:20px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#888;text-align:center;">Nesting Bird Survey Report - Generated ${new Date().toISOString()} - CDFW Standard Format</div>`;
+
+  container.innerHTML = html;
+  document.body.appendChild(container);
+
+  // Wait for all images to load before rendering
+  const images = container.querySelectorAll('img');
+  if (images.length > 0) {
+    await Promise.all(Array.from(images).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+    }));
+  }
+
+  // Generate filename
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const projName = (surveyList[0]?.projectName || 'Survey').replace(/[^a-zA-Z0-9]/g, '_');
+  const fileName = `BirdSurvey_${projName}_${dateStr}.pdf`;
+
+  try {
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: fileName,
+      image: { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', width: 750, windowWidth: 750 },
+      jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    // Generate PDF and trigger download via anchor click (works on iOS + desktop)
+    const pdfBlob = await html2pdf().set(opt).from(container).outputPdf('blob');
+    const blob = new Blob([pdfBlob], { type: 'application/pdf' });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }, 1000);
+    toast('PDF saved: ' + fileName);
+  } catch (err) {
+    console.error('PDF generation error:', err);
+    toast('PDF error: ' + err.message);
+  } finally {
+    document.body.removeChild(container);
+  }
+}
+
+// =====================================================
+// REPORT VIEW (on-screen)
+// =====================================================
+function generateOnScreenReport() {
+  const container = document.getElementById('reportContainer');
+  if (surveys.length===0) {
+    container.innerHTML='<div class="section"><div class="empty-state"><div class="icon">&#x1F4CA;</div><h3>No data</h3><p>Save surveys first.</p></div></div>';
+    return;
+  }
+  const allBirds=surveys.flatMap(s=>s.birds||[]);
+  const totalObs=allBirds.reduce((sum,b)=>sum+(parseInt(b.count)||1),0);
+  const uniqueSpp=[...new Set(allBirds.map(b=>(b.code||b.name||'').toUpperCase()).filter(Boolean))];
+  const allNesting=surveys.flatMap(s=>s.nesting||[]);
+  const nestSpp=[...new Set(allNesting.map(n=>(n.species||'').toUpperCase()).filter(Boolean))];
+  const buffered=surveys.filter(s=>s.bufferEstablished==='Yes').length;
+  const dates=surveys.map(s=>s.surveyDate).filter(Boolean).sort();
+  const dateRange=dates.length?`${dates[0]} to ${dates[dates.length-1]}`:'N/A';
+  const projects=[...new Set(surveys.map(s=>s.projectName).filter(Boolean))];
+
+  const speciesCount={};
+  allBirds.forEach(b=>{const k=(b.code||b.name||'?').toUpperCase();speciesCount[k]=(speciesCount[k]||0)+(parseInt(b.count)||1);});
+  const speciesSorted=Object.entries(speciesCount).sort((a,b)=>b[1]-a[1]);
+
+  const nestAct={};
+  allNesting.forEach(n=>{const k=n.activity||'?';nestAct[k]=(nestAct[k]||0)+1;});
+
+  container.innerHTML=`<div class="section">
+    <div class="report-header"><h2>&#x1F426; Survey Summary Report</h2><p>${dateRange} &bull; ${projects.join(', ')||'All Projects'}</p></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num">${surveys.length}</div><div class="stat-label">Surveys</div></div>
+      <div class="stat-card"><div class="stat-num">${uniqueSpp.length}</div><div class="stat-label">Species</div></div>
+      <div class="stat-card"><div class="stat-num">${totalObs}</div><div class="stat-label">Individuals</div></div>
+      <div class="stat-card"><div class="stat-num">${allNesting.length}</div><div class="stat-label">Nest Activities</div></div>
+      <div class="stat-card"><div class="stat-num">${buffered}</div><div class="stat-label">Buffers Set</div></div>
+      <div class="stat-card"><div class="stat-num">${nestSpp.length}</div><div class="stat-label">Nesting Species</div></div>
+    </div>
+    ${speciesSorted.length?`<h3 style="margin:16px 0 8px;color:var(--primary)">Species Observed</h3>
+    <table class="report-table"><tr><th>Code</th><th>Common Name</th><th>Total</th><th>%</th></tr>
+    ${speciesSorted.map(([sp,ct])=>`<tr><td><strong>${sp}</strong></td><td>${codeToName[sp]||sp}</td><td>${ct}</td><td>${(ct/totalObs*100).toFixed(1)}%</td></tr>`).join('')}
+    </table>`:''}
+    ${Object.keys(nestAct).length?`<h3 style="margin:16px 0 8px;color:var(--primary)">Nesting Activity</h3>
+    <table class="report-table"><tr><th>Activity</th><th>Count</th></tr>
+    ${Object.entries(nestAct).sort((a,b)=>b[1]-a[1]).map(([a,c])=>`<tr><td>${a}</td><td>${c}</td></tr>`).join('')}
+    </table>`:''}
+    ${surveys.some(s=>s.specialStatus)?`<h3 style="margin:16px 0 8px;color:var(--danger)">Special Status Notes</h3>
+    ${surveys.filter(s=>s.specialStatus).map(s=>`<div style="background:#fff8e1;border-left:4px solid var(--accent);padding:10px 14px;margin-bottom:8px;border-radius:0 8px 8px 0"><strong>${s.surveyDate||'-'}</strong> &mdash; ${s.specialStatus}</div>`).join('')}`:''}
+    <h3 style="margin:16px 0 8px;color:var(--primary)">Survey Log</h3>
+    <table class="report-table"><tr><th>Date</th><th>Project</th><th>Observer</th><th>Site</th><th>GPS</th><th>Birds</th><th>Nests</th></tr>
+    ${[...surveys].sort((a,b)=>(a.surveyDate||'').localeCompare(b.surveyDate||'')).map(s=>`<tr>
+      <td>${s.surveyDate||'-'}</td><td>${s.projectName||'-'}</td><td>${s.observers||'-'}</td>
+      <td>${s.siteName||'-'}</td><td style="font-size:11px">${s.latitude?s.latitude+', '+s.longitude:'-'}</td>
+      <td>${(s.birds||[]).length}</td><td>${(s.nesting||[]).length}</td></tr>`).join('')}
+    </table>
+  </div>
+  <div class="btn-row" style="margin-bottom:32px">
+    <button class="btn btn-primary btn-sm" onclick="generatePDFReport(surveys,'Full Survey Report')">&#x1F4C4; Export PDF Report</button>
+    <button class="btn btn-secondary btn-sm" onclick="exportAllCSV()">&#x1F4E5; Export CSV</button>
+  </div>`;
+}
+
+// =====================================================
+// NAV
+// =====================================================
+function showView(view) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>{t.classList.toggle('active',['form','saved','report'][i]===view);});
+  if(view==='saved') renderSavedList();
+  if(view==='report') generateOnScreenReport();
+}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// =====================================================
+// INIT
+// =====================================================
+async function init(){
+  await openDB();
+  await loadSurveys();
+  document.getElementById('surveyDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('startTime').value=new Date().toTimeString().slice(0,5);
+  // Warn before leaving with unsaved data
+  window.addEventListener('beforeunload', e => {
+    const hasUnsaved = document.getElementById('projectName').value ||
+      document.querySelectorAll('#birdsList .list-item').length > 0 ||
+      document.querySelectorAll('#nestingList .list-item').length > 0;
+    if (hasUnsaved && !currentEditId) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+}
+init();
+</script>
+</body>
+</html>
